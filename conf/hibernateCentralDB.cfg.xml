@@ -6,7 +6,8 @@
 <session-factory>
 <!-- JDBC connection settings -->
 <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
-<property name="connection.url">jdbc:hsqldb:hsql://localhost/xdb</property>
+<!--property name="connection.url">jdbc:hsqldb:hsql://localhost/xdb</property-->
+<property name="connection.url">jdbc:hsqldb:file:/home/shs/workspace/DNSCore/ContentBroker/mydb</property>
 <property name="connection.username">SA</property>
 <property name="connection.password"></property>
  
@@ -24,23 +25,22 @@
 <!-- Display and format all executed SQL to stdout -->
 <!--<property name="show_sql">false</property>-->
 <property name="format_sql">true</property>
-<property name="hbm2ddl.auto">create</property>
+<property name="hbm2ddl.auto">validate</property>
  
- <mapping class="de.uzk.hki.da.model.User"/>
- <mapping class="de.uzk.hki.da.model.Node"/>
  <mapping class="de.uzk.hki.da.model.ConversionInstruction"/>
- <mapping class="de.uzk.hki.da.model.ConversionPolicy"/>
- <mapping class="de.uzk.hki.da.model.Job"/>
- <mapping class="de.uzk.hki.da.model.ConversionRoutine"/>
- <mapping class="de.uzk.hki.da.model.Object"/>
- <mapping class="de.uzk.hki.da.model.DAFile"/>
- <mapping class="de.uzk.hki.da.model.Package"/>
- <mapping class="de.uzk.hki.da.model.Event"/>
- <mapping class="de.uzk.hki.da.model.PreservationSystem"/>
- <mapping class="de.uzk.hki.da.model.SecondStageScanPolicy"/>
- <mapping class="de.uzk.hki.da.model.Role"/>
-
-
+<mapping class="de.uzk.hki.da.model.ConversionRoutine"/>
+<mapping class="de.uzk.hki.da.model.Job"/>
+<mapping class="de.uzk.hki.da.model.ConversionPolicy"/>
+<mapping class="de.uzk.hki.da.model.Node"/>
+<mapping class="de.uzk.hki.da.model.User"/>
+<mapping class="de.uzk.hki.da.model.Role"/>
+<mapping class="de.uzk.hki.da.model.Object"/>
+<mapping class="de.uzk.hki.da.model.Document"/>
+<mapping class="de.uzk.hki.da.model.Package"/>
+<mapping class="de.uzk.hki.da.model.DAFile"/>
+<mapping class="de.uzk.hki.da.model.Event"/>
+<mapping class="de.uzk.hki.da.model.PreservationSystem"/>
+<mapping class="de.uzk.hki.da.model.SubformatIdentificationStrategyPuidMapping"/>
  
 </session-factory>
 </hibernate-configuration>
