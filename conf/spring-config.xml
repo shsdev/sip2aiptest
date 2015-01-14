@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:amq="http://activemq.apache.org/schema/core"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/util
+           http://www.springframework.org/schema/util/spring-util-3.0.xsd
+           http://www.springframework.org/schema/task
+           http://www.springframework.org/schema/task/spring-task-3.0.xsd
+           http://activemq.apache.org/schema/core 
+           http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>file:/home/shs/workspace/sip2aiptest/conf/config.properties
+			</value>
+		</property>
+	</bean>
+
+	<bean id="registerObjectService" class="ait.ac.at.eark.MyRegisterObjectService"
+		init-method="init">
+		<property name="localNodeId" value="${localNode.id}" />
+		<property name="preservationSystemId" value="1" />
+	</bean>
+
+	<bean id="customPropertyEditorRegistrar" class="de.uzk.hki.da.util.CustomPropertyEditorRegistrar" />
+	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+		<property name="propertyEditorRegistrars">
+			<list>
+				<ref bean="customPropertyEditorRegistrar" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="localNode" class="de.uzk.hki.da.model.Node">
+		<property name="workAreaRootPath" value="${localNode.workAreaRootPath}" />
+		<property name="userAreaRootPath" value="${localNode.userAreaRootPath:_}" />
+		<property name="ingestAreaRootPath" value="${localNode.ingestAreaRootPath:_}" />
+		<property name="gridCacheAreaRootPath" value="${localNode.gridCacheAreaRootPath:_}" />
+		<property name="workingResource" value="${localNode.workingResource}" />
+		<property name="id" value="${localNode.id}" />
+		<property name="replDestinations" value="${localNode.replDestinations}" />
+	</bean>
+
+	<bean class="de.uzk.hki.da.core.UserExceptionManager" id="userExceptionManager"
+		init-method="readConfigFile" />
+	<bean class="de.uzk.hki.da.model.JobNamedQueryDAO" id="queueConnector" />
+	<amq:broker id="mqBroker" useShutdownHook="true" useJmx="false"
+		deleteAllMessagesOnStartup="true" start="false">
+		<amq:systemUsage>
+			<amq:systemUsage>
+				<amq:memoryUsage>
+					<amq:memoryUsage limit="16Mb" />
+				</amq:memoryUsage>
+				<amq:tempUsage>
+					<amq:tempUsage limit="100Mb" />
+				</amq:tempUsage>
+				<amq:storeUsage>
+					<amq:storeUsage limit="1GB" />
+				</amq:storeUsage>
+			</amq:systemUsage>
+		</amq:systemUsage>
+		<amq:transportConnectors>
+			<amq:transportConnector uri="tcp://localhost:${cb.serverSocketNumber}" />
+		</amq:transportConnectors>
+	</amq:broker>
+	<amq:connectionFactory brokerURL="tcp://localhost:${cb.serverSocketNumber}"
+		id="mqConnectionFactory" />
+	<bean id="jmsMessageServiceHandler" class="de.uzk.hki.da.service.JmsMessageServiceHandler">
+		<property name="mqConnectionFactory" ref="mqConnectionFactory" />
+	</bean>
+
+	<bean id="fakeDistributedConversionAdapter" class="de.uzk.hki.da.grid.FakeDistributedConversionAdapter" />
+	<bean id="fakeGridFacade" class="de.uzk.hki.da.grid.FakeGridFacade">
+		<property name="gridCacheAreaRootPath" value="${localNode.gridCacheAreaRootPath:_}" />
+	</bean>
+	<bean id="fakeRepositoryFacade" class="de.uzk.hki.da.repository.FakeRepositoryFacade">
+		<property name="workAreaRootPath" value="${localNode.workAreaRootPath}" />
+	</bean>
+	<bean id="fakeFileFormatFacade" class="de.uzk.hki.da.format.FakeFileFormatFacade" />
+	<bean id="standardFileFormatFacade" class="de.uzk.hki.da.format.StandardFileFormatFacade" />
+
+	<util:map id="actionThreads">
+		<entry key="IngestUnpackAction" value="3" />
+		<entry key="IngestRestructureAction" value="3" />
+		<entry key="IngestValidateMetadataAction" value="3" />
+		<entry key="IngestScanAction" value="3" />
+		<entry key="IngestRegisterURNAction" value="3" />
+		<entry key="IngestConvertAction" value="3" />
+		<entry key="IngestUpdateMetadataAction" value="3" />
+		<entry key="IngestCheckFormatsAction" value="3" />
+		<entry key="IngestCreatePremisAction" value="3" />
+		<entry key="IngestScanForPresentationAction" value="3" />
+		<entry key="IngestConvertForPresentationAction" value="3" />
+		<entry key="IngestShortenFileNamesAction" value="3" />
+		<entry key="IngestPresUpdateMetadataAction" value="3" />
+		<entry key="IngestPrepareSendToPresenterAction" value="3" />
+		<entry key="IngestBuildAIPAction" value="3" />
+		<entry key="IngestTarAction" value="3" />
+		<entry key="IngestArchiveReplicationAction" value="3" />
+		<entry key="IngestArchiveReplicationCheckAction" value="3" />
+	</util:map>
+	<util:list id="actionOrdering">
+		<value>IngestUnpackAction</value>
+		<value>IngestRestructureAction</value>
+		<value>IngestValidateMetadataAction</value>
+		<value>IngestScanAction</value>
+		<value>IngestRegisterURNAction</value>
+		<value>IngestConvertAction</value>
+		<value>IngestUpdateMetadataAction</value>
+		<value>IngestCheckFormatsAction</value>
+<!-- 		<value>IngestCreatePremisAction</value> -->
+<!-- 		<value>IngestScanForPresentationAction</value> -->
+<!-- 		<value>IngestConvertForPresentationAction</value> -->
+<!-- 		<value>IngestShortenFileNamesAction</value> -->
+<!-- 		<value>IngestPresUpdateMetadataAction</value> -->
+<!-- 		<value>IngestPrepareSendToPresenterAction</value> -->
+<!-- 		<value>IngestBuildAIPAction</value> -->
+<!-- 		<value>IngestTarAction</value> -->
+<!-- 		<value>IngestArchiveReplicationAction</value> -->
+<!-- 		<value>IngestArchiveReplicationCheckAction</value> -->
+	</util:list>
+	<bean id="actionRegistry" class="de.uzk.hki.da.action.ActionRegistry">
+		<property name="maxThreads" ref="actionThreads" />
+		<property name="actionPriority" ref="actionOrdering" />
+	</bean>
+	<bean id="actionFactory" class="de.uzk.hki.da.action.ActionFactory"
+		init-method="init">
+		<property name="actionRegistry" ref="actionRegistry" />
+		<property name="localNode" ref="localNode" />
+		<property name="queueConnector" ref="queueConnector" />
+		<property name="userExceptionManager" ref="userExceptionManager" />
+		<property name="jmsMessageServiceHandler" ref="jmsMessageServiceHandler" />
+		<property name="fileFormatFacade"
+			ref="${cb.implementation.fileFormatFacade:standardFileFormatFacade}" />
+	</bean>
+
+	<bean class="de.uzk.hki.da.core.IngestGate" id="ingestGate">
+		<property name="workAreaRootPath" value="${localNode.workAreaRootPath}" />
+		<property name="fileSizeFactor" value="3" />
+		<property name="freeDiskSpacePercent" value="5" />
+	</bean>
+
+	<bean id="IngestUnpackAction" class="de.uzk.hki.da.cb.UnpackAction"
+		scope="prototype">
+		<property name="startStatus" value="110" />
+		<property name="endStatus" value="120" />
+		<property name="name" value="IngestUnpackAction" />
+		<property name="ingestGate" ref="ingestGate" />
+		<property name="actionMap" ref="actionRegistry" />
+	</bean>
+
+	<bean id="IngestRestructureAction" class="de.uzk.hki.da.cb.RestructureAction"
+		scope="prototype">
+		<property name="startStatus" value="120" />
+		<property name="endStatus" value="130" />
+		<property name="name" value="IngestRestructureAction" />
+		<property name="ingestGate" ref="ingestGate" />
+		<property name="gridRoot" ref="${cb.implementation.grid:fakeGridFacade}" />
+		<property name="fileFormatFacade"
+			ref="${cb.implementation.fileFormatFacade:standardFileFormatFacade}" />
+	</bean>
+
+	<bean id="IngestValidateMetadataAction" class="de.uzk.hki.da.cb.ValidateMetadataAction"
+		scope="prototype">
+		<property name="startStatus" value="130" />
+		<property name="endStatus" value="140" />
+		<property name="name" value="IngestValidateMetadataAction" />
+	</bean>
+
+	<bean id="IngestScanAction" class="de.uzk.hki.da.cb.ScanAction"
+		scope="prototype">
+		<property name="startStatus" value="140" />
+		<property name="endStatus" value="150" />
+		<property name="name" value="IngestScanAction" />
+		<property name="description" value="Format Scan Service" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+	</bean>
+
+	<bean id="IngestRegisterURNAction" class="de.uzk.hki.da.cb.RegisterURNAction"
+		scope="prototype">
+		<property name="startStatus" value="150" />
+		<property name="endStatus" value="230" />
+		<property name="name" value="IngestRegisterURNAction" />
+	</bean>
+
+	<bean id="IngestConvertAction" class="de.uzk.hki.da.cb.ConvertAction"
+		scope="prototype">
+		<property name="startStatus" value="230" />
+		<property name="endStatus" value="250" />
+		<property name="name" value="IngestConvertAction" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+	</bean>
+
+	<util:map id="updateMetadataNamespaces">
+		<entry key="mets" value="http://www.loc.gov/METS/" />
+		<entry key="rdf" value="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
+		<entry key="lido" value="http://www.lido-schema.org" />
+		<entry key="xlink" value="http://www.w3.org/1999/xlink" />
+	</util:map>
+	<util:map id="updateMetadataXpathsForUrls">
+		<!-- <entry key="METS" value="//mets:FLocat/@xlink:href"/> -->
+		<entry key="METS" value="//mets:file" />
+		<entry key="EAD" value="//daoloc/@href" />
+		<entry key="XMP" value="//rdf:Description/@rdf:about" />
+		<entry key="LIDO" value="//lido:linkResource" />
+	</util:map>
+	<bean class="de.uzk.hki.da.format.MimeTypeDetectionService" id="mtds" />
+	<bean id="IngestUpdateMetadataAction" class="de.uzk.hki.da.cb.UpdateMetadataAction"
+		scope="prototype">
+		<property name="startStatus" value="250" />
+		<property name="endStatus" value="260" />
+		<property name="name" value="IngestUpdateMetadataAction" />
+		<property name="mtds" ref="mtds" />
+		<property name="namespaces" ref="updateMetadataNamespaces" />
+		<property name="xpathsToUrls" ref="updateMetadataXpathsForUrls" />
+		<property name="dcMappings">
+			<map>
+				<entry key="METS" value="conf/xslt/dc/mets-mods_to_dc.xsl" />
+				<entry key="EAD" value="conf/xslt/dc/ead_to_dc.xsl" />
+				<entry key="XMP" value="conf/xslt/dc/xmp_to_dc.xsl" />
+				<entry key="LIDO" value="conf/xslt/dc/lido_to_dc.xsl" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="IngestCheckFormatsAction" class="de.uzk.hki.da.cb.CheckFormatsAction"
+		scope="prototype">
+		<property name="startStatus" value="260" />
+		<property name="endStatus" value="270" />
+		<property name="name" value="IngestCheckFormatsAction" />
+		<property name="fileFormatFacade" ref="standardFileFormatFacade" />
+	</bean>
+
+	<bean id="IngestCreatePremisAction" class="de.uzk.hki.da.cb.CreatePremisAction"
+		scope="prototype">
+		<property name="startStatus" value="270" />
+		<property name="endStatus" value="310" />
+		<property name="name" value="IngestCreatePremisAction" />
+		<property name="fileFormatFacade"
+			ref="${cb.implementation.fileFormatFacade:standardFileFormatFacade}" />
+	</bean>
+
+	<bean id="IngestScanForPresentationAction" class="de.uzk.hki.da.cb.ScanForPresentationAction"
+		scope="prototype">
+		<property name="startStatus" value="310" />
+		<property name="endStatus" value="320" />
+		<property name="name" value="IngestScanForPresentationAction" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+		<property name="formatScanService"
+			ref="${cb.implementation.fileFormatFacade:standardFileFormatFacade}" />
+	</bean>
+
+	<bean id="IngestConvertForPresentationAction" class="de.uzk.hki.da.cb.ConvertAction"
+		scope="prototype">
+		<property name="startStatus" value="320" />
+		<property name="endStatus" value="340" />
+		<property name="name" value="IngestConvertForPresentationAction" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+	</bean>
+
+	<bean id="IngestShortenFileNamesAction" class="de.uzk.hki.da.cb.ShortenFileNamesAction"
+		scope="prototype">
+		<property name="startStatus" value="340" />
+		<property name="endStatus" value="350" />
+		<property name="name" value="IngestShortenFileNamesAction" />
+	</bean>
+
+	<bean id="IngestPresUpdateMetadataAction" class="de.uzk.hki.da.cb.UpdateMetadataAction"
+		scope="prototype">
+		<property name="startStatus" value="350" />
+		<property name="endStatus" value="360" />
+		<property name="name" value="IngestUpdateMetadataAction" />
+		<property name="namespaces" ref="updateMetadataNamespaces" />
+		<property name="xpathsToUrls" ref="updateMetadataXpathsForUrls" />
+		<property name="writePackageTypeToDC" value="true" />
+		<property name="mtds" ref="mtds" />
+		<property name="repNames">
+			<util:list>
+				<value>dip/public</value>
+				<value>dip/institution</value>
+			</util:list>
+		</property>
+		<property name="presMode" value="true" />
+		<property name="dcMappings">
+			<map>
+				<entry key="METS" value="conf/xslt/dc/mets-mods_to_dc.xsl" />
+				<entry key="EAD" value="conf/xslt/dc/ead_to_dc.xsl" />
+				<entry key="XMP" value="conf/xslt/dc/xmp_to_dc.xsl" />
+				<entry key="LIDO" value="conf/xslt/dc/lido_to_dc.xsl" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="IngestPrepareSendToPresenterAction" class="de.uzk.hki.da.cb.PrepareSendToPresenterAction"
+		scope="prototype">
+		<property name="startStatus" value="360" />
+		<property name="endStatus" value="370" />
+		<property name="name" value="IngestPrepareSendToPresenterAction" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+	</bean>
+
+	<bean id="IngestBuildAIPAction" class="de.uzk.hki.da.cb.BuildAIPAction"
+		scope="prototype">
+		<property name="startStatus" value="370" />
+		<property name="endStatus" value="380" />
+		<property name="name" value="IngestBuildAIPAction" />
+	</bean>
+
+	<bean id="IngestTarAction" class="de.uzk.hki.da.cb.TarAction"
+		scope="prototype">
+		<property name="startStatus" value="380" />
+		<property name="endStatus" value="400" />
+		<property name="distributedConversionAdapter"
+			ref="${cb.implementation.distributedConversion:fakeDistributedConversionAdapter}" />
+		<property name="name" value="IngestTarAction" />
+	</bean>
+
+	<bean id="IngestArchiveReplicationAction" class="de.uzk.hki.da.cb.ArchiveReplicationAction"
+		scope="prototype">
+		<property name="startStatus" value="400" />
+		<property name="endStatus" value="440" />
+		<property name="name" value="IngestArchiveReplicationAction" />
+		<property name="gridRoot" ref="${cb.implementation.grid:fakeGridFacade}" />
+	</bean>
+
+	<bean id="IngestArchiveReplicationCheckAction" class="de.uzk.hki.da.cb.ArchiveReplicationCheckAction"
+		scope="prototype">
+		<property name="startStatus" value="440" />
+		<property name="endStatus" value="500" />
+		<property name="timeOut" value="2000" />
+		<property name="gridRoot" ref="${cb.implementation.grid:fakeGridFacade}" />
+		<property name="name" value="IngestArchiveReplicationCheckAction" />
+	</bean>
+
+</beans>

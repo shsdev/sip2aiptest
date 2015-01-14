@@ -8,3 +8,6 @@
 .project
 .settings/
 jhove
+storage
+activemq-data/
+sip2aiptest.log

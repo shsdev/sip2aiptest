@@ -1,0 +1,6 @@
+<included>
+  
+  <!-- one of { INFO, DEBUG } -->
+  <property name="root.level" value="DEBUG" />
+
+</included>
