@@ -19,11 +19,10 @@
 		</property>
 	</bean>
 
-	<bean id="registerObjectService" class="ait.ac.at.eark.MyRegisterObjectService"
-		init-method="init">
-		<property name="localNodeId" value="${localNode.id}" />
-		<property name="preservationSystemId" value="1" />
-	</bean>
+	<bean id="registerObjectService" class="de.uzk.hki.da.core.RegisterObjectService" init-method="init" >
+   		<property name="localNodeId" value="${localNode.id}"/>
+   		<property name="preservationSystemId" value="1" />
+   </bean>
 
 	<bean id="customPropertyEditorRegistrar" class="de.uzk.hki.da.util.CustomPropertyEditorRegistrar" />
 	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
